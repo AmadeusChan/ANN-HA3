@@ -6,9 +6,11 @@ import os
 import time
 from model import Model
 from load_data import load_mnist_2d
+from scipy import misc
+from scipy import ndimage
 
 tf.app.flags.DEFINE_integer("batch_size", 100, "batch size for training")
-tf.app.flags.DEFINE_integer("num_epochs", 20, "number of epochs")
+tf.app.flags.DEFINE_integer("num_epochs", 100, "number of epochs")
 tf.app.flags.DEFINE_float("keep_prob", 0.5, "drop out rate")
 tf.app.flags.DEFINE_boolean("is_train", True, "False to inference")
 tf.app.flags.DEFINE_string("data_dir", "./MNIST_data", "data dir")
@@ -77,8 +79,40 @@ with tf.Session() as sess:
         os.mkdir(FLAGS.train_dir)
     if FLAGS.is_train:
         X_train, X_test, y_train, y_test = load_mnist_2d(FLAGS.data_dir)
+
+        temp = np.arange(X_train.shape[0])
+        np.random.shuffle(temp)
+
+        X_train = X_train[temp]
+        y_train = y_train[temp]
+
         X_val, y_val = X_train[50000:], y_train[50000:]
         X_train, y_train = X_train[:50000], y_train[:50000]
+
+        temp_data = X_train.copy()
+        temp_label = y_train.copy()
+
+        N = X_train.shape[0]
+        for i in range(3):
+            X_train = np.append(X_train, temp_data, axis=0)
+            y_train = np.append(y_train, temp_label, axis=0)
+
+        for n in range(N, 2*N): 
+            image = np.reshape(X_train[n], (28, 28))
+            image = misc.imrotate(image, 10*np.random.randn()) / 255.0
+            X_train[n] = np.reshape(image, (1, 784))
+            
+        for n in range(2*N, 3*N):
+            X_train[n] = X_train[n] + np.random.randn() 
+            X_train[n] = X_train[n] + np.random.randn(1, 784) * 0.01
+            
+        for n in range(3*N, 4*N): 
+            image = np.reshape(X_train[n], (28, 28))
+            image = ndimage.shift(misc.imrotate(image, np.random.randn()), (np.random.randn() * 2, np.random.randn() * 2) ) / 255.0
+            X_train[n] = np.reshape(image, (1, 784))
+
+        print X_train.shape, ' ', y_train.shape
+
         mlp_model = Model(True)
         if tf.train.get_checkpoint_state(FLAGS.train_dir):
             mlp_model.saver.restore(sess, tf.train.latest_checkpoint(FLAGS.train_dir))

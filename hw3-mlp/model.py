@@ -2,7 +2,6 @@
 
 import tensorflow as tf
 
-
 class Model:
     def __init__(self,
                  is_train,
@@ -14,11 +13,28 @@ class Model:
 
         # TODO:  implement input -- Linear -- BN -- ReLU -- Linear -- loss
         #        the 10-class prediction output is named as "logits"
-        logits = tf.Variable(tf.constant(0.0, shape=[100, 10]))  # deleted this line after you implement above layers
 
-        self.loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=self.y_, logits=logits))
-        self.correct_pred = tf.equal(tf.cast(tf.argmax(logits, 1), tf.int32), self.y_)
-        self.pred = tf.argmax(logits, 1)  # Calculate the prediction result
+        self.W1 = weight_variable(shape = [784, 1024])
+        self.b1 = bias_variable(shape = [1024])
+
+        self.u1 = tf.matmul(self.x_, self.W1) + self.b1
+        self.y1 = tf.nn.relu(self.u1)
+
+        self.W2 = weight_variable(shape = [1024, 128])
+        self.b2 = bias_variable(shape = [128])
+
+        self.u2 = tf.matmul(self.y1, self.W2) + self.b2
+        self.y2 = tf.nn.relu(self.u2)
+
+        self.W3 = weight_variable(shape = [128, 10])
+        self.b3 = bias_variable(shape = [10])
+        self.logits = tf.matmul(self.y2, self.W3) + self.b3
+
+        # logits = tf.Variable(tf.constant(0.0, shape=[100, 10]))  # deleted this line after you implement above layers
+
+        self.loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=self.y_, logits=self.logits))
+        self.correct_pred = tf.equal(tf.cast(tf.argmax(self.logits, 1), tf.int32), self.y_)
+        self.pred = tf.argmax(self.logits, 1)  # Calculate the prediction result
         self.acc = tf.reduce_mean(tf.cast(self.correct_pred, tf.float32))  # Calculate the accuracy in this mini-batch
 
         self.learning_rate = tf.Variable(float(learning_rate), trainable=False, dtype=tf.float32)
