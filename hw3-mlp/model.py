@@ -14,21 +14,16 @@ class Model:
         # TODO:  implement input -- Linear -- BN -- ReLU -- Linear -- loss
         #        the 10-class prediction output is named as "logits"
 
-        self.W1 = weight_variable(shape = [784, 1024])
-        self.b1 = bias_variable(shape = [1024])
+        self.W1 = weight_variable(shape = [784, 1000])
+        self.b1 = bias_variable(shape = [1000])
 
         self.u1 = tf.matmul(self.x_, self.W1) + self.b1
         self.y1 = tf.nn.relu(self.u1)
 
-        self.W2 = weight_variable(shape = [1024, 128])
-        self.b2 = bias_variable(shape = [128])
+        self.W2 = weight_variable(shape = [1000, 10])
+        self.b2 = bias_variable(shape = [10])
 
-        self.u2 = tf.matmul(self.y1, self.W2) + self.b2
-        self.y2 = tf.nn.relu(self.u2)
-
-        self.W3 = weight_variable(shape = [128, 10])
-        self.b3 = bias_variable(shape = [10])
-        self.logits = tf.matmul(self.y2, self.W3) + self.b3
+        self.logits = tf.matmul(self.y1, self.W2) + self.b2
 
         # logits = tf.Variable(tf.constant(0.0, shape=[100, 10]))  # deleted this line after you implement above layers
 

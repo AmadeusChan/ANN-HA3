@@ -10,7 +10,7 @@ from scipy import misc
 from scipy import ndimage
 
 tf.app.flags.DEFINE_integer("batch_size", 100, "batch size for training")
-tf.app.flags.DEFINE_integer("num_epochs", 100, "number of epochs")
+tf.app.flags.DEFINE_integer("num_epochs", 50, "number of epochs")
 tf.app.flags.DEFINE_float("keep_prob", 0.5, "drop out rate")
 tf.app.flags.DEFINE_boolean("is_train", True, "False to inference")
 tf.app.flags.DEFINE_string("data_dir", "./MNIST_data", "data dir")
@@ -80,6 +80,7 @@ with tf.Session() as sess:
     if FLAGS.is_train:
         X_train, X_test, y_train, y_test = load_mnist_2d(FLAGS.data_dir)
 
+        # to shuffle the trainning data
         temp = np.arange(X_train.shape[0])
         np.random.shuffle(temp)
 
@@ -89,6 +90,7 @@ with tf.Session() as sess:
         X_val, y_val = X_train[50000:], y_train[50000:]
         X_train, y_train = X_train[:50000], y_train[:50000]
 
+        '''
         temp_data = X_train.copy()
         temp_label = y_train.copy()
 
@@ -112,12 +114,18 @@ with tf.Session() as sess:
             X_train[n] = np.reshape(image, (1, 784))
 
         print X_train.shape, ' ', y_train.shape
+        '''
 
         mlp_model = Model(True)
+
+        '''
         if tf.train.get_checkpoint_state(FLAGS.train_dir):
             mlp_model.saver.restore(sess, tf.train.latest_checkpoint(FLAGS.train_dir))
         else:
             tf.global_variables_initializer().run()
+        '''
+
+        tf.global_variables_initializer().run()
 
         pre_losses = [1e18] * 3
         best_val_acc = 0.0
@@ -144,6 +152,7 @@ with tf.Session() as sess:
             print("  best validation accuracy:      " + str(best_val_acc))
             print("  test loss:                     " + str(test_loss))
             print("  test accuracy:                 " + str(test_acc))
+            print "\n"
 
             if train_loss > max(pre_losses):  # Learning rate decay
                 sess.run(mlp_model.learning_rate_decay_op)
