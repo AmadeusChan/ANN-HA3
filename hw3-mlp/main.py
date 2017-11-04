@@ -12,7 +12,7 @@ from scipy import ndimage
 
 tf.app.flags.DEFINE_integer("batch_size", 100, "batch size for training")
 tf.app.flags.DEFINE_integer("num_epochs", 100, "number of epochs")
-tf.app.flags.DEFINE_float("keep_prob", 0.1, "drop out rate")
+tf.app.flags.DEFINE_float("keep_prob", 1.0, "drop out rate")
 tf.app.flags.DEFINE_boolean("is_train", True, "False to inference")
 tf.app.flags.DEFINE_string("data_dir", "./MNIST_data", "data dir")
 tf.app.flags.DEFINE_string("train_dir", "./train", "training dir")
@@ -47,7 +47,10 @@ def train_epoch(model, sess, X, y, train_file): # Training Process
     while st < len(X) and ed <= len(X):
         X_batch, y_batch = X[st:ed], y[st:ed]
         feed = {model.x_: X_batch, model.y_: y_batch, model.keep_prob: FLAGS.keep_prob}
-        loss_, acc_, _ = sess.run([model.loss, model.acc, model.train_op], feed)
+
+        loss_, acc_, _, __, ___ = sess.run([model.loss, model.acc, model.train_op, model.update_var_op, model.update_mean_op], feed)
+        _ = sess.run(model.update_iter_op)
+
         loss += loss_
         acc += acc_
         st, ed = ed, ed+FLAGS.batch_size
