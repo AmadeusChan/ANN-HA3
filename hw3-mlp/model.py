@@ -6,7 +6,9 @@ class Model:
     def __init__(self,
                  is_train,
                  learning_rate=0.001,
-                 learning_rate_decay_factor=0.9995):
+                 learning_rate_decay_factor=0.9995,
+                 ):
+        self.is_train = is_train
 
         self.x_ = tf.placeholder(tf.float32, [None, 28*28], name = "x_input")
         self.y_ = tf.placeholder(tf.int32, [None], "y_input")
@@ -16,16 +18,18 @@ class Model:
         # TODO:  implement input -- Linear -- BN -- ReLU -- Linear -- loss
         #        the 10-class prediction output is named as "logits"
 
-        self.W1 = weight_variable(shape = [784, 784], name = "linear_W1")
-        self.b1 = bias_variable(shape = [784], name = "linear_b1")
+        self.W1 = weight_variable(shape = [784, 1024], name = "linear_W1")
+        self.b1 = bias_variable(shape = [1024], name = "linear_b1")
 
         self.u1 = tf.matmul(self.x_, self.W1) + self.b1
         self.y1 = tf.nn.relu(self.u1)
 
-        self.W2 = weight_variable(shape = [784, 10], name = "linear_W2")
+        self.y1_drop = tf.nn.dropout(self.y1, keep_prob = self.keep_prob)
+
+        self.W2 = weight_variable(shape = [1024, 10], name = "linear_W2")
         self.b2 = bias_variable(shape = [10], name = "linear_b2")
 
-        self.logits = tf.matmul(self.y1, self.W2) + self.b2
+        self.logits = tf.matmul(self.y1_drop, self.W2) + self.b2
 
         # logits = tf.Variable(tf.constant(0.0, shape=[100, 10]))  # deleted this line after you implement above layers
 
