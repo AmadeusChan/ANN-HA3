@@ -18,18 +18,30 @@ class Model:
         # TODO:  implement input -- Linear -- BN -- ReLU -- Linear -- loss
         #        the 10-class prediction output is named as "logits"
 
+        self.x_drop = tf.nn.dropout(self.x_, keep_prob = self.keep_prob)
+
         self.W1 = weight_variable(shape = [784, 1024], name = "linear_W1")
         self.b1 = bias_variable(shape = [1024], name = "linear_b1")
 
-        self.u1 = tf.matmul(self.x_, self.W1) + self.b1
+        self.u1 = tf.matmul(self.x_drop, self.W1) + self.b1
         self.y1 = tf.nn.relu(self.u1)
 
-        self.y1_drop = tf.nn.dropout(self.y1, keep_prob = self.keep_prob)
+        self.W2 = weight_variable(shape = [1024, 256], name = "linear_W2")
+        self.b2 = bias_variable(shape = [256], name = "linear_b2")
 
-        self.W2 = weight_variable(shape = [1024, 10], name = "linear_W2")
-        self.b2 = bias_variable(shape = [10], name = "linear_b2")
+        self.u2 = tf.matmul(self.y1, self.W2) + self.b2
+        self.y2 = tf.nn.relu(self.u2)
 
-        self.logits = tf.matmul(self.y1_drop, self.W2) + self.b2
+        self.W3 = weight_variable(shape = [256, 64], name = "linear_W3")
+        self.b3 = bias_variable(shape = [64], name = "linear_b3")
+
+        self.u3 = tf.matmul(self.y2, self.W3) + self.b3
+        self.y3 = tf.nn.relu(self.u3)
+
+        self.W4 = weight_variable(shape = [64, 10], name = "linear_W4")
+        self.b4 = bias_variable(shape = [10], name = "linear_b4")
+
+        self.logits = tf.matmul(self.y3, self.W4) + self.b4
 
         # logits = tf.Variable(tf.constant(0.0, shape=[100, 10]))  # deleted this line after you implement above layers
 
