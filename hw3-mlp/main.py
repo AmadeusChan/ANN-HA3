@@ -3,6 +3,7 @@
 import tensorflow as tf
 import numpy as np
 import os
+import sys
 import time
 from model import Model
 from load_data import load_mnist_2d
@@ -10,7 +11,7 @@ from scipy import misc
 from scipy import ndimage
 
 tf.app.flags.DEFINE_integer("batch_size", 100, "batch size for training")
-tf.app.flags.DEFINE_integer("num_epochs", 50, "number of epochs")
+tf.app.flags.DEFINE_integer("num_epochs", 200, "number of epochs")
 tf.app.flags.DEFINE_float("keep_prob", 0.5, "drop out rate")
 tf.app.flags.DEFINE_boolean("is_train", True, "False to inference")
 tf.app.flags.DEFINE_string("data_dir", "./MNIST_data", "data dir")
@@ -37,8 +38,10 @@ def shuffle(X, y, shuffle_parts):  # Shuffle the X and y
 
     return X, y
 
+iteration = 0
 
-def train_epoch(model, sess, X, y): # Training Process
+def train_epoch(model, sess, X, y, train_file): # Training Process
+    global iteration
     loss, acc = 0.0, 0.0
     st, ed, times = 0, FLAGS.batch_size, 0
     while st < len(X) and ed <= len(X):
@@ -49,6 +52,11 @@ def train_epoch(model, sess, X, y): # Training Process
         acc += acc_
         st, ed = ed, ed+FLAGS.batch_size
         times += 1
+
+        iteration +=1
+        with open(train_file, "a") as f:
+            f.write(str(iteration) + " " + str(loss_) + " " + str(acc_) + "\n")
+
     loss /= times
     acc /= times
     return acc, loss
@@ -73,6 +81,27 @@ def valid_epoch(model, sess, X, y):  # Valid Process
 def inference(model, sess, X):  # Test Process
     return sess.run([model.pred], {model.x_: X})[0]
 
+
+if not os.path.exists("result"):
+    os.mkdir("result")
+
+train_file = "result/train.txt"
+valid_file = "result/valid.txt"
+test_file = "result/test.txt"
+
+if len(sys.argv)>1:
+    train_file = "result/" + sys.argv[1]
+if len(sys.argv)>2:
+    valid_file = "result/" + sys.argv[2]
+if len(sys.argv)>3:
+    test_file = "result/" + sys.argv[3]
+
+os.system("rm " + train_file)
+os.system("touch " + train_file)
+os.system("rm " + valid_file)
+os.system("touch " + valid_file)
+os.system("rm " + test_file)
+os.system("touch " + test_file)
 
 with tf.Session() as sess:
     if not os.path.exists(FLAGS.train_dir):
@@ -131,15 +160,22 @@ with tf.Session() as sess:
         best_val_acc = 0.0
         for epoch in range(FLAGS.num_epochs):
             start_time = time.time()
-            train_acc, train_loss = train_epoch(mlp_model, sess, X_train, y_train)  # Complete the training process
+            train_acc, train_loss = train_epoch(mlp_model, sess, X_train, y_train, train_file)  # Complete the training process
             X_train, y_train = shuffle(X_train, y_train, 1)
 
             val_acc, val_loss = valid_epoch(mlp_model, sess, X_val, y_val)  # Complete the valid process
+
+            with open(valid_file, "a") as f:
+                f.write(str(epoch) + " " + str(val_loss) + " " + str(val_acc) + "\n")
 
             if val_acc >= best_val_acc:  # when valid_accuracy > best_valid_accuracy, save the model
                 best_val_acc = val_acc
                 best_epoch = epoch + 1
                 test_acc, test_loss = valid_epoch(mlp_model, sess, X_test, y_test)  # Complete the test process
+
+                with open(test_file, "a") as f:
+                    f.write(str(test_loss) + " " + str(test_acc) + "\n")
+
                 mlp_model.saver.save(sess, '%s/checkpoint' % FLAGS.train_dir, global_step=mlp_model.global_step)
 
             epoch_time = time.time() - start_time

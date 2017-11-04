@@ -7,21 +7,23 @@ class Model:
                  is_train,
                  learning_rate=0.001,
                  learning_rate_decay_factor=0.9995):
-        self.x_ = tf.placeholder(tf.float32, [None, 28*28])
-        self.y_ = tf.placeholder(tf.int32, [None])
+
+        self.x_ = tf.placeholder(tf.float32, [None, 28*28], name = "x_input")
+        self.y_ = tf.placeholder(tf.int32, [None], "y_input")
+
         self.keep_prob = tf.placeholder(tf.float32)
 
         # TODO:  implement input -- Linear -- BN -- ReLU -- Linear -- loss
         #        the 10-class prediction output is named as "logits"
 
-        self.W1 = weight_variable(shape = [784, 1000])
-        self.b1 = bias_variable(shape = [1000])
+        self.W1 = weight_variable(shape = [784, 784], name = "linear_W1")
+        self.b1 = bias_variable(shape = [784], name = "linear_b1")
 
         self.u1 = tf.matmul(self.x_, self.W1) + self.b1
         self.y1 = tf.nn.relu(self.u1)
 
-        self.W2 = weight_variable(shape = [1000, 10])
-        self.b2 = bias_variable(shape = [10])
+        self.W2 = weight_variable(shape = [784, 10], name = "linear_W2")
+        self.b2 = bias_variable(shape = [10], name = "linear_b2")
 
         self.logits = tf.matmul(self.y1, self.W2) + self.b2
 
@@ -44,14 +46,14 @@ class Model:
                                     max_to_keep=3, pad_step_number=True, keep_checkpoint_every_n_hours=1.0)
 
 
-def weight_variable(shape):  # you can use this func to build new variables
+def weight_variable(shape, name):  # you can use this func to build new variables
     initial = tf.truncated_normal(shape, stddev=0.1)
-    return tf.Variable(initial)
+    return tf.Variable(initial, name = name)
 
 
-def bias_variable(shape):  # you can use this func to build new variables
+def bias_variable(shape, name):  # you can use this func to build new variables
     initial = tf.constant(0.1, shape=shape)
-    return tf.Variable(initial)
+    return tf.Variable(initial, name = name)
 
 
 def batch_normalization_layer(inputs, isTrain=True):
