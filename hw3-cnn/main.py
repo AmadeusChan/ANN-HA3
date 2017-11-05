@@ -45,7 +45,7 @@ def train_epoch(model, sess, X, y):
     while st < len(X) and ed <= len(X):
         X_batch, y_batch = X[st:ed], y[st:ed]
         feed = {model.x_: X_batch, model.y_: y_batch, model.keep_prob: FLAGS.keep_prob}
-        loss_, acc_, _ = sess.run([model.loss, model.acc, model.train_op], feed)
+        loss_, acc_, _, __, ___ = sess.run([model.loss, model.acc, model.train_op, model.update_m1, model.update_v1], feed)
         loss += loss_
         acc += acc_
         st, ed = ed, ed+FLAGS.batch_size
