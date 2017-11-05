@@ -16,7 +16,36 @@ class Model:
 
         # TODO: implement input -- Conv -- BN -- ReLU -- MaxPool -- Conv -- BN -- ReLU -- MaxPool -- Linear -- loss
         #        the 10-class prediction output is named as "logits"
-        logits = tf.Variable(tf.constant(0.0, shape=[100, 10]))  # deleted this line after you implement above layers
+        # logits = tf.Variable(tf.constant(0.0, shape=[100, 10]))  # deleted this line after you implement above layers
+
+        # 1st convolution layer
+        self.W_conv1 = weight_variable(shape = [5, 5, 1, 32])
+        self.b_conv1 = bias_variable(shape = [32])
+
+        self.u1 = tf.nn.conv2d(x, self.W_conv1, strides = [1, 1, 1, 1], padding = "SAME") + self.b_conv1
+        self.y1 = tf.nn.relu(self.u1)
+
+        # 1st max-pool layer
+        self.pool1 = tf.nn.max_pool(self.y1, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = "SAME") # output: batch_size x 14 x 14 x 32
+
+        # 2nd convolution layer
+        self.W_conv2 = weight_variable(shape = [5, 5, 32, 256])
+        self.b_conv2 = bias_variable(shape = [256])
+
+        self.u2 = tf.nn.conv2d(self.pool1, self.W_conv2, strides = [1, 1, 1, 1], padding = "SAME") + self.b_conv2
+        self.y2 = tf.nn.relu(self.u2)
+
+        # 2nd max-pool layer
+        self.pool2 = tf.nn.max_pool(self.y2, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = "SAME")
+        # output: batch_size x 7 x 7 x 256
+
+        self.pool2_reshape = tf.reshape(self.pool2, [-1, 7 * 7 * 256])
+        self.pool2_reshape_drop = tf.nn.dropout(self.pool2_reshape, keep_prob = self.keep_prob)
+
+        # classification layer
+        self.W1 = weight_variable(shape = [7 * 7 * 256, 10])
+        self.b1 = bias_variable(shape = [10])
+        logits = tf.matmul(self.pool2_reshape_drop, self.W1) + self.b1
 
         self.loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=self.y_, logits=logits))
         self.correct_pred = tf.equal(tf.cast(tf.argmax(logits, 1), tf.int32), self.y_)

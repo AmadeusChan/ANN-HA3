@@ -6,6 +6,7 @@ import os
 import time
 from model import Model
 from load_data import load_mnist_4d
+import sys
 
 tf.app.flags.DEFINE_integer("batch_size", 100, "batch size for training")
 tf.app.flags.DEFINE_integer("num_epochs", 20, "number of epochs")
@@ -35,8 +36,10 @@ def shuffle(X, y, shuffle_parts):
 
     return X, y
 
+iteration = 0
 
 def train_epoch(model, sess, X, y):
+    global iteration
     loss, acc = 0.0, 0.0
     st, ed, times = 0, FLAGS.batch_size, 0
     while st < len(X) and ed <= len(X):
@@ -47,6 +50,10 @@ def train_epoch(model, sess, X, y):
         acc += acc_
         st, ed = ed, ed+FLAGS.batch_size
         times += 1
+
+        iteration += 1
+        with open(train_file, "a") as f:
+            f.write(str(iteration) + " " + str(loss_) + " " + str(acc_) + "\n")
     loss /= times
     acc /= times
     return acc, loss
@@ -71,6 +78,26 @@ def valid_epoch(model, sess, X, y):
 def inference(model, sess, X):
     return sess.run([model.pred], {model.x_: X, model.keep_prob: 1.0})[0]
 
+if not os.path.exists("result"):
+    os.mkdir("result")
+
+train_file = "result/train.txt"
+valid_file = "result/valid.txt"
+test_file = "result/test.txt"
+
+if len(sys.argv)>1:
+    train_file = "result/" + sys.argv[1]
+if len(sys.argv)>2:
+    valid_file = "result/" + sys.argv[2]
+if len(sys.argv)>3:
+    test_file = "result/" + sys.argv[3]
+
+os.system("rm " + train_file)
+os.system("touch " + train_file)
+os.system("rm " + valid_file)
+os.system("touch " + valid_file)
+os.system("rm " + test_file)
+os.system("touch " + test_file)
 
 with tf.Session() as sess:
     if not os.path.exists(FLAGS.train_dir):
@@ -80,10 +107,13 @@ with tf.Session() as sess:
         X_val, y_val = X_train[50000:], y_train[50000:]
         X_train, y_train = X_train[:50000], y_train[:50000]
         cnn_model = Model(is_train=True)
+        '''
         if tf.train.get_checkpoint_state(FLAGS.train_dir):
             cnn_model.saver.restore(sess, tf.train.latest_checkpoint(FLAGS.train_dir))
         else:
             tf.global_variables_initializer().run()
+        '''
+        tf.global_variables_initializer().run()
 
         pre_losses = [1e18] * 3
         best_val_acc = 0.0
@@ -94,11 +124,17 @@ with tf.Session() as sess:
 
             val_acc, val_loss = valid_epoch(cnn_model, sess, X_val, y_val)
 
+            with open(valid_file, "a") as f:
+                f.write(str(epoch) + " " + str(val_loss) + " " + str(val_acc) + "\n")
+
             if val_acc >= best_val_acc:
                 best_val_acc = val_acc
                 best_epoch = epoch + 1
                 test_acc, test_loss = valid_epoch(cnn_model, sess, X_test, y_test)
                 cnn_model.saver.save(sess, '%s/checkpoint' % FLAGS.train_dir, global_step=cnn_model.global_step)
+
+                with open(test_file, "a") as f:
+                    f.write(str(test_loss) + " " + str(test_acc) + "\n")
 
             epoch_time = time.time() - start_time
             print("Epoch " + str(epoch + 1) + " of " + str(FLAGS.num_epochs) + " took " + str(epoch_time) + "s")
@@ -110,6 +146,7 @@ with tf.Session() as sess:
             print("  best validation accuracy:      " + str(best_val_acc))
             print("  test loss:                     " + str(test_loss))
             print("  test accuracy:                 " + str(test_acc))
+            print "\n"
 
             if train_loss > max(pre_losses):
                 sess.run(cnn_model.learning_rate_decay_op)
