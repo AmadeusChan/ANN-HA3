@@ -139,6 +139,10 @@ with tf.Session() as sess:
             print X_train.shape, ' ', y_train.shape
 
         cnn_model = Model(is_train=True)
+
+        merged = tf.summary.merge_all()
+        writer = tf.summary.FileWriter("/tmp/mnist_logs", sess.graph)
+
         '''
         if tf.train.get_checkpoint_state(FLAGS.train_dir):
             cnn_model.saver.restore(sess, tf.train.latest_checkpoint(FLAGS.train_dir))
