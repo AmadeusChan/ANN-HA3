@@ -7,12 +7,14 @@ class Model:
     def __init__(self,
                  is_train,
                  learning_rate=0.001,
-                 learning_rate_decay_factor=0.9995):
+                 learning_rate_decay_factor=0.9995,
+                 mean_var_decay=0.99):
         self.x_ = tf.placeholder(tf.float32, [None, 1, 28, 28])
         self.y_ = tf.placeholder(tf.int32, [None])
         self.keep_prob = tf.placeholder(tf.float32)
 
         x = tf.reshape(self.x_, [-1, 28, 28, 1])
+        self.batch_size = tf.to_float(tf.shape(x)[0])
 
         # TODO: implement input -- Conv -- BN -- ReLU -- MaxPool -- Conv -- BN -- ReLU -- MaxPool -- Linear -- loss
         #        the 10-class prediction output is named as "logits"
@@ -23,7 +25,8 @@ class Model:
         self.b_conv1 = bias_variable(shape = [32])
 
         self.u1 = tf.nn.conv2d(x, self.W_conv1, strides = [1, 1, 1, 1], padding = "SAME") + self.b_conv1
-        self.y1 = tf.nn.relu(self.u1)
+        self.u1_bn = batch_normalization_layer(self.u1, mean_var_decay, 32, isTrain = is_train)
+        self.y1 = tf.nn.relu(self.u1_bn)
 
         # 1st max-pool layer
         self.pool1 = tf.nn.max_pool(self.y1, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = "SAME") # output: batch_size x 14 x 14 x 32
@@ -33,7 +36,8 @@ class Model:
         self.b_conv2 = bias_variable(shape = [256])
 
         self.u2 = tf.nn.conv2d(self.pool1, self.W_conv2, strides = [1, 1, 1, 1], padding = "SAME") + self.b_conv2
-        self.y2 = tf.nn.relu(self.u2)
+        self.u2_bn = batch_normalization_layer(self.u2, mean_var_decay, 256, isTrain = is_train)
+        self.y2 = tf.nn.relu(self.u2_bn)
 
         # 2nd max-pool layer
         self.pool2 = tf.nn.max_pool(self.y2, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = "SAME")
@@ -75,7 +79,23 @@ def bias_variable(shape):  # you can use this func to build new variables
     return tf.Variable(initial)
 
 
-def batch_normalization_layer(inputs, isTrain=True):
+def batch_normalization_layer(inputs, mean_var_decay, channel, isTrain=True):
     # TODO: implemented the batch normalization func and applied it on conv and fully-connected layers
     # hint: you can add extra parameters (e.g., shape) if necessary
-    return inputs
+    mean, var = tf.nn.moments(inputs, axes = [0, 1, 2], keep_dims = False)
+    ave_m = tf.Variable(tf.constant(0., shape = [channel]), trainable = False)
+    ave_v = tf.Variable(tf.constant(0., shape = [channel]), trainable = False)
+    batch_size = tf.to_float(tf.shape(inputs)[0])
+    update_m = ave_m.assign(ave_m * mean_var_decay + mean * (1. - mean_var_decay))
+    update_v = ave_v.assign(ave_v * mean_var_decay + var * batch_size / (batch_size - 1.) * (1. - mean_var_decay))
+    tf.add_to_collection("update_mean_var_op", update_m)
+    tf.add_to_collection("update_mean_var_op", update_v)
+    scale = tf.Variable(tf.constant(1., shape = ave_m.shape))
+    offset = tf.Variable(tf.constant(0., shape = ave_m.shape))
+    
+    if isTrain:
+        m, v = tf.nn.moments(inputs, axes = [0, 1, 2], keep_dims = False)
+    else:
+        m, v = ave_m, ave_v
+    return tf.nn.batch_normalization(inputs, m, v, offset, scale, tf.constant(1e-10))
+
