@@ -48,8 +48,7 @@ def train_epoch(model, sess, X, y, train_file): # Training Process
         X_batch, y_batch = X[st:ed], y[st:ed]
         feed = {model.x_: X_batch, model.y_: y_batch, model.keep_prob: FLAGS.keep_prob}
 
-        loss_, acc_, _, __, ___, mean_ = sess.run([model.loss, model.acc, model.train_op, model.update_var_op, model.update_mean_op, model.mean], feed)
-        _ = sess.run(model.update_iter_op)
+        loss_, acc_, _, __ = sess.run([model.loss, model.acc, model.train_op, tf.get_collection("update_op")], feed)
 
         loss += loss_
         acc += acc_
