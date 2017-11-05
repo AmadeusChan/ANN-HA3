@@ -47,7 +47,10 @@ def train_epoch(model, sess, X, y, train_file): # Training Process
     while st < len(X) and ed <= len(X):
         X_batch, y_batch = X[st:ed], y[st:ed]
         feed = {model.x_: X_batch, model.y_: y_batch, model.keep_prob: FLAGS.keep_prob}
-        loss_, acc_, _ = sess.run([model.loss, model.acc, model.train_op], feed)
+
+        loss_, acc_, _, __, ___ = sess.run([model.loss, model.acc, model.train_op, model.update_var_op, model.update_mean_op], feed)
+        _ = sess.run(model.update_iter_op)
+
         loss += loss_
         acc += acc_
         st, ed = ed, ed+FLAGS.batch_size
@@ -143,7 +146,7 @@ with tf.Session() as sess:
 
         print X_train.shape, ' ', y_train.shape
 
-        mlp_model = Model(True)
+        mlp_model = Model(True, learning_rate = 0.01)
 
         '''
         if tf.train.get_checkpoint_state(FLAGS.train_dir):
