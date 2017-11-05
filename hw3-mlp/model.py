@@ -7,6 +7,7 @@ class Model:
                  is_train,
                  learning_rate=0.001,
                  learning_rate_decay_factor=0.9995,
+		 mean_var_decay = 0.999
                  ):
         self.is_train = is_train
 
@@ -14,8 +15,7 @@ class Model:
         self.y_ = tf.placeholder(tf.int32, [None], "y_input")
 
         self.keep_prob = tf.placeholder(tf.float32)
-
-        self.x_drop = tf.nn.dropout(self.x_, keep_prob = self.keep_prob)
+	self.x_drop = tf.nn.dropout(self.x_, keep_prob = self.keep_prob)
 
         # TODO:  implement input -- Linear -- BN -- ReLU -- Linear -- loss
         #        the 10-class prediction output is named as "logits"
@@ -36,8 +36,13 @@ class Model:
         self.update_iter_op = self.iteration.assign(self.iteration + 1)
 
         self.batch_size = tf.to_float(tf.shape(self.x_)[0])
+	'''
         self.update_mean_op = self.ave_mean.assign(self.ave_mean * (self.iteration / (self.iteration + 1.)) + self.mean / (self.iteration + 1.))
         self.update_var_op = self.ave_var.assign(self.ave_var * (self.iteration / (self.iteration + 1.)) + self.var * self.batch_size / (self.batch_size - 1.) / (self.iteration + 1.))
+	'''
+
+	self.update_mean_op = self.ave_mean.assign(self.ave_mean * mean_var_decay + self.mean * (1. - mean_var_decay))
+	self.update_var_op = self.ave_var.assign(self.ave_var * mean_var_decay + self.var * self.batch_size / (self.batch_size - 1.) * (1. - mean_var_decay))
 
         self.scale = tf.Variable(tf.constant(1., shape = self.mean.shape))
         self.offset = tf.Variable(tf.constant(0., shape = self.mean.shape))
@@ -46,7 +51,7 @@ class Model:
         if is_train:
             self.u1_bn = batch_normalization_layer(self.u1, scale = self.scale, offset = self.offset)
         else:
-            self.u1_bn = batch_normalization_layer(self.u1, scale = self.scale, offset = self.offset, ave_var = self.total_var / self.iteration, ave_mean = self.total_mean, isTrain = False)
+            self.u1_bn = batch_normalization_layer(self.u1, scale = self.scale, offset = self.offset, ave_var = self.ave_var, ave_mean = self.ave_mean, isTrain = False)
 
         self.y1 = tf.nn.relu(self.u1_bn)
 

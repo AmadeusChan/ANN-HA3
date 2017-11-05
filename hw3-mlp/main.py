@@ -13,7 +13,11 @@ from scipy import ndimage
 tf.app.flags.DEFINE_integer("batch_size", 100, "batch size for training")
 tf.app.flags.DEFINE_integer("num_epochs", 200, "number of epochs")
 tf.app.flags.DEFINE_float("keep_prob", 0.5, "drop out rate")
+<<<<<<< HEAD
 tf.app.flags.DEFINE_boolean("is_train", True, "False to inference")
+=======
+tf.app.flags.DEFINE_boolean("is_train", False, "False to inference")
+>>>>>>> 2ccaef9a79817212c3d818e07507dc43cc00fe9c
 tf.app.flags.DEFINE_string("data_dir", "./MNIST_data", "data dir")
 tf.app.flags.DEFINE_string("train_dir", "./train", "training dir")
 tf.app.flags.DEFINE_integer("inference_version", 0, "the version for inferencing")
@@ -48,7 +52,7 @@ def train_epoch(model, sess, X, y, train_file): # Training Process
         X_batch, y_batch = X[st:ed], y[st:ed]
         feed = {model.x_: X_batch, model.y_: y_batch, model.keep_prob: FLAGS.keep_prob}
 
-        loss_, acc_, _, __, ___ = sess.run([model.loss, model.acc, model.train_op, model.update_var_op, model.update_mean_op], feed)
+        loss_, acc_, _, __, ___, mean_ = sess.run([model.loss, model.acc, model.train_op, model.update_var_op, model.update_mean_op, model.mean], feed)
         _ = sess.run(model.update_iter_op)
 
         loss += loss_
@@ -82,7 +86,7 @@ def valid_epoch(model, sess, X, y):  # Valid Process
 
 
 def inference(model, sess, X):  # Test Process
-    return sess.run([model.pred], {model.x_: X})[0]
+    return sess.run([model.pred], {model.x_: X, model.keep_prob: 1.0})[0]
 
 
 if not os.path.exists("result"):
