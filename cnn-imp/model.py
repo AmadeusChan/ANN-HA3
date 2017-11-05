@@ -106,12 +106,15 @@ class Model:
                 self.b2_b1 = bias_variable(shape = [10])
                 logits_b1 = tf.matmul(self.ly1_b1, self.W2_b1) + self.b2_b1
 
-        self.logits = logits + logits_b1
+	self.w = tf.Variable(1.)
+	self.w_b1 = tf.Variable(1.)
+        self.logits = logits * self.w + logits_b1 * self.w_b1
 
         with tf.name_scope("loss"):
             self.loss1 = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=self.y_, logits=logits), name = "loss1")
             self.loss2 = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=self.y_, logits=logits_b1), name = "loss2")
-            self.loss = (self.loss1 + self.loss2) / 2.
+            self.loss_vote = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=self.y_, logits=self.logits), name = "loss_vote")
+	    self.loss = self.loss1 + self.loss2 + self.loss_vote
 
         with tf.name_scope("pred-acc"):
             self.correct_pred = tf.equal(tf.cast(tf.argmax(self.logits, 1), tf.int32), self.y_)
