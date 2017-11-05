@@ -11,7 +11,7 @@ import sys
 tf.app.flags.DEFINE_integer("batch_size", 100, "batch size for training")
 tf.app.flags.DEFINE_integer("num_epochs", 3, "number of epochs")
 tf.app.flags.DEFINE_float("keep_prob", 0.5, "drop out rate")
-tf.app.flags.DEFINE_boolean("is_train", False, "False to inference")
+tf.app.flags.DEFINE_boolean("is_train", True, "False to inference")
 tf.app.flags.DEFINE_string("data_dir", "./MNIST_data", "data dir")
 tf.app.flags.DEFINE_string("train_dir", "./train", "training dir")
 tf.app.flags.DEFINE_integer("inference_version", 0, "the param version for inference")
@@ -107,6 +107,10 @@ with tf.Session() as sess:
         X_val, y_val = X_train[50000:], y_train[50000:]
         X_train, y_train = X_train[:50000], y_train[:50000]
         cnn_model = Model(is_train=True)
+
+        merged = tf.summary.merge_all()
+        writer = tf.summary.FileWriter("/tmp/mnist_logs", sess.graph)
+
         '''
         if tf.train.get_checkpoint_state(FLAGS.train_dir):
             cnn_model.saver.restore(sess, tf.train.latest_checkpoint(FLAGS.train_dir))
