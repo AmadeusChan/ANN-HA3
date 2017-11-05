@@ -7,9 +7,10 @@ import time
 from model import Model
 from load_data import load_mnist_4d
 import sys
+from scipy import misc, ndimage
 
 tf.app.flags.DEFINE_integer("batch_size", 100, "batch size for training")
-tf.app.flags.DEFINE_integer("num_epochs", 3, "number of epochs")
+tf.app.flags.DEFINE_integer("num_epochs", 100, "number of epochs")
 tf.app.flags.DEFINE_float("keep_prob", 0.5, "drop out rate")
 tf.app.flags.DEFINE_boolean("is_train", True, "False to inference")
 tf.app.flags.DEFINE_string("data_dir", "./MNIST_data", "data dir")
@@ -50,6 +51,10 @@ def train_epoch(model, sess, X, y):
         acc += acc_
         st, ed = ed, ed+FLAGS.batch_size
         times += 1
+        '''
+        if times % 10 == 0:
+            print times
+        '''
 
         iteration += 1
         with open(train_file, "a") as f:
@@ -110,6 +115,28 @@ with tf.Session() as sess:
 
         merged = tf.summary.merge_all()
         writer = tf.summary.FileWriter("/tmp/mnist_logs", sess.graph)
+        # data augmentation
+        if (len(sys.argv)>4) and (sys.argv[4]=="-da"):
+            temp_data = X_train.copy()
+            temp_label = y_train.copy()
+            N = X_train.shape[0]
+            
+            for i in range(3):
+                X_train = np.append(X_train, temp_data, axis=0)
+                y_train = np.append(y_train, temp_label, axis=0)
+            for n in range(N, 2*N): 
+                image = X_train[n][0]
+                image = (misc.imrotate(image, 15*np.random.randn()) - 128.) / 255.0
+                X_train[n][0] = image
+            for n in range(2*N, 3*N):
+                # X_train[n][0] = X_train[n][0] + np.random.randn() * 0.05
+                X_train[n][0] = X_train[n][0] + np.random.randn(28, 28) * 0.01
+            for n in range(3*N, 4*N): 
+                image = X_train[n][0]
+                image = (ndimage.shift(misc.imrotate(image, np.random.randn()), (np.random.randn() * 2, np.random.randn() * 2) ) - 128.) / 255.0
+                X_train[n][0] = image
+            print X_train.shape, ' ', y_train.shape
+
 
         '''
         if tf.train.get_checkpoint_state(FLAGS.train_dir):
