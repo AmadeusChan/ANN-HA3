@@ -6,7 +6,7 @@ import tensorflow as tf
 class Model:
     def __init__(self,
                  is_train,
-                 learning_rate=0.005,
+                 learning_rate=0.003,
                  learning_rate_decay_factor=0.999,
                  mean_var_decay=0.99):
         self.x_ = tf.placeholder(tf.float32, [None, 1, 28, 28])
@@ -21,35 +21,40 @@ class Model:
         # logits = tf.Variable(tf.constant(0.0, shape=[100, 10]))  # deleted this line after you implement above layers
 
         # 1st convolution layer
-        self.W_conv1 = weight_variable(shape = [5, 5, 1, 16])
-        self.b_conv1 = bias_variable(shape = [16])
+        self.W_conv1 = weight_variable(shape = [5, 5, 1, 32])
+        self.b_conv1 = bias_variable(shape = [32])
 
         self.u1 = tf.nn.conv2d(x, self.W_conv1, strides = [1, 1, 1, 1], padding = "SAME") + self.b_conv1
-        self.u1_bn = batch_normalization_layer(self.u1, mean_var_decay, 16, isTrain = is_train)
+        self.u1_bn = batch_normalization_layer(self.u1, mean_var_decay, 32, isTrain = is_train)
         self.y1 = tf.nn.relu(self.u1_bn)
 
         # 1st max-pool layer
         self.pool1 = tf.nn.max_pool(self.y1, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = "SAME") # output: batch_size x 14 x 14 x 32
 
         # 2nd convolution layer
-        self.W_conv2 = weight_variable(shape = [5, 5, 16, 128])
-        self.b_conv2 = bias_variable(shape = [128])
+        self.W_conv2 = weight_variable(shape = [5, 5, 32, 256])
+        self.b_conv2 = bias_variable(shape = [256])
 
         self.u2 = tf.nn.conv2d(self.pool1, self.W_conv2, strides = [1, 1, 1, 1], padding = "SAME") + self.b_conv2
-        self.u2_bn = batch_normalization_layer(self.u2, mean_var_decay, 128, isTrain = is_train)
+        self.u2_bn = batch_normalization_layer(self.u2, mean_var_decay, 256, isTrain = is_train)
         self.y2 = tf.nn.relu(self.u2_bn)
 
         # 2nd max-pool layer
         self.pool2 = tf.nn.max_pool(self.y2, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = "SAME")
         # output: batch_size x 7 x 7 x 128
 
-        self.pool2_reshape = tf.reshape(self.pool2, [-1, 7 * 7 * 128])
+        self.pool2_reshape = tf.reshape(self.pool2, [-1, 7 * 7 * 256])
         self.pool2_reshape_drop = tf.nn.dropout(self.pool2_reshape, keep_prob = self.keep_prob)
 
         # classification layer
-        self.W1 = weight_variable(shape = [7 * 7 * 128, 10])
-        self.b1 = bias_variable(shape = [10])
-        logits = tf.matmul(self.pool2_reshape_drop, self.W1) + self.b1
+        self.W3 = weight_variable(shape = [7 * 7 * 256, 128])
+        self.b3 = bias_variable(shape = [128])
+        self.u3 = tf.matmul(self.pool2_reshape_drop, self.W3) + self.b3
+        self.y3 = tf.nn.relu(self.u3)
+
+        self.W4 = weight_variable(shape = [128, 10])
+        self.b4 = bias_variable(shape = [10])
+        logits = tf.matmul(self.y3, self.W4) + self.b4
 
         self.loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=self.y_, logits=logits))
         self.correct_pred = tf.equal(tf.cast(tf.argmax(logits, 1), tf.int32), self.y_)
