@@ -6,8 +6,8 @@ import tensorflow as tf
 class Model:
     def __init__(self,
                  is_train,
-                 learning_rate=0.001,
-                 learning_rate_decay_factor=0.9995,
+                 learning_rate=0.003,
+                 learning_rate_decay_factor=0.999,
                  mean_var_decay=0.99):
         with tf.name_scope("input"):
             self.x_ = tf.placeholder(tf.float32, [None, 1, 28, 28], name = "x_input")
@@ -23,8 +23,8 @@ class Model:
         # 1st convolution layer
         with tf.name_scope("conv-pool1"):
             with tf.name_scope("conv"):
-                self.W_conv1 = weight_variable(shape = [5, 5, 1, 32], name = "W_conv1")
-                self.b_conv1 = bias_variable(shape = [32], name = "b_conv1")
+                self.W_conv1 = weight_variable(shape = [5, 5, 1, 32])
+                self.b_conv1 = bias_variable(shape = [32])
                 self.u1 = tf.nn.conv2d(x, self.W_conv1, strides = [1, 1, 1, 1], padding = "SAME") + self.b_conv1
             with tf.name_scope("bn"):
                 self.u1_bn = batch_normalization_layer(self.u1, mean_var_decay, 32, isTrain = is_train)
@@ -37,8 +37,8 @@ class Model:
         # 2nd convolution layer
         with tf.name_scope("conv-pool2"):
             with tf.name_scope("conv"):
-                self.W_conv2 = weight_variable(shape = [5, 5, 32, 256], name = "W_conv2")
-                self.b_conv2 = bias_variable(shape = [256], name = "b_conv2")
+                self.W_conv2 = weight_variable(shape = [5, 5, 32, 256])
+                self.b_conv2 = bias_variable(shape = [256])
                 self.u2 = tf.nn.conv2d(self.pool1, self.W_conv2, strides = [1, 1, 1, 1], padding = "SAME") + self.b_conv2
             with tf.name_scope("bn"):
                 self.u2_bn = batch_normalization_layer(self.u2, mean_var_decay, 256, isTrain = is_train)
@@ -58,9 +58,14 @@ class Model:
             # classification layer
 
             with tf.name_scope("linear"):
-                self.W1 = weight_variable(shape = [7 * 7 * 256, 10], name = "W1")
-                self.b1 = bias_variable(shape = [10], name = "b1")
-                logits = tf.matmul(self.pool2_reshape_drop, self.W1) + self.b1
+                self.W3 = weight_variable(shape = [7 * 7 * 256, 128])
+                self.b3 = bias_variable(shape = [128])
+                self.u3 = tf.matmul(self.pool2_reshape_drop, self.W3) + self.b3
+                self.y3 = tf.nn.relu(self.u3)
+                
+                self.W4 = weight_variable(shape = [128, 10])
+                self.b4 = bias_variable(shape = [10])
+                logits = tf.matmul(self.y3, self.W4) + self.b4
 
         with tf.name_scope("loss"):
             self.loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=self.y_, logits=logits), name = "loss")
@@ -84,14 +89,14 @@ class Model:
 
 
 
-def weight_variable(shape, name):  # you can use this func to build new variables
+def weight_variable(shape):  # you can use this func to build new variables
     initial = tf.truncated_normal(shape, stddev=0.1)
-    return tf.Variable(initial, name = name)
+    return tf.Variable(initial)
 
 
-def bias_variable(shape, name):  # you can use this func to build new variables
+def bias_variable(shape):  # you can use this func to build new variables
     initial = tf.constant(0.1, shape=shape)
-    return tf.Variable(initial, name = name)
+    return tf.Variable(initial)
 
 
 def batch_normalization_layer(inputs, mean_var_decay, channel, isTrain=True):

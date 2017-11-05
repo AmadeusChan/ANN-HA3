@@ -58,9 +58,14 @@ class Model:
             # classification layer
 
             with tf.name_scope("linear"):
-                self.W1 = weight_variable(shape = [7 * 7 * 256, 10])
-                self.b1 = bias_variable(shape = [10])
-                logits = tf.matmul(self.pool2_reshape_drop, self.W1) + self.b1
+                self.W3 = weight_variable(shape = [7 * 7 * 256, 128])
+                self.b3 = bias_variable(shape = [128])
+                self.u3 = tf.matmul(self.pool2_reshape_drop, self.W3) + self.b3
+                self.y3 = tf.nn.relu(self.u3)
+                
+                self.W4 = weight_variable(shape = [128, 10])
+                self.b4 = bias_variable(shape = [10])
+                logits = tf.matmul(self.y3, self.W4) + self.b4
 
         with tf.name_scope("conv-pool1-branch1"): # output: 12 x 12 x 32
             with tf.name_scope("conv"):
