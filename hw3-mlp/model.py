@@ -28,6 +28,7 @@ class Model:
         self.u1 = tf.matmul(self.x_drop, self.W1) + self.b1
 
         # create tensorflow variable to save mean and variace for inference
+        '''
         self.iteration = tf.Variable(0., trainable = False, dtype = tf.float32)
         self.ave_mean = tf.Variable(tf.zeros(shape = [1, 1024]), trainable = False)
         self.ave_var = tf.Variable(tf.zeros(shape = [1, 1024]), trainable = False)
@@ -36,11 +37,13 @@ class Model:
         self.update_iter_op = self.iteration.assign(self.iteration + 1)
 
         self.batch_size = tf.to_float(tf.shape(self.x_)[0])
+        '''
 	'''
         self.update_mean_op = self.ave_mean.assign(self.ave_mean * (self.iteration / (self.iteration + 1.)) + self.mean / (self.iteration + 1.))
         self.update_var_op = self.ave_var.assign(self.ave_var * (self.iteration / (self.iteration + 1.)) + self.var * self.batch_size / (self.batch_size - 1.) / (self.iteration + 1.))
 	'''
 
+        '''
 	self.update_mean_op = self.ave_mean.assign(self.ave_mean * mean_var_decay + self.mean * (1. - mean_var_decay))
 	self.update_var_op = self.ave_var.assign(self.ave_var * mean_var_decay + self.var * self.batch_size / (self.batch_size - 1.) * (1. - mean_var_decay))
 
@@ -52,12 +55,14 @@ class Model:
             self.u1_bn = batch_normalization_layer(self.u1, scale = self.scale, offset = self.offset)
         else:
             self.u1_bn = batch_normalization_layer(self.u1, scale = self.scale, offset = self.offset, ave_var = self.ave_var, ave_mean = self.ave_mean, isTrain = False)
+        '''
 
-        self.y1 = tf.nn.relu(self.u1_bn)
+        self.y1 = tf.nn.relu(self.u1)
 
-        self.W2 = weight_variable(shape = [1024, 256], name = "linear_W2")
-        self.b2 = bias_variable(shape = [256], name = "linear_b2")
+        self.W2 = weight_variable(shape = [1024, 10], name = "linear_W2")
+        self.b2 = bias_variable(shape = [10], name = "linear_b2")
 
+        '''
         self.u2 = tf.matmul(self.y1, self.W2) + self.b2
         self.y2 = tf.nn.relu(self.u2)
 
@@ -69,8 +74,9 @@ class Model:
 
         self.W4 = weight_variable(shape = [64, 10], name = "linear_W4")
         self.b4 = bias_variable(shape = [10], name = "linear_b4")
+        '''
 
-        self.logits = tf.matmul(self.y3, self.W4) + self.b4
+        self.logits = tf.matmul(self.y1, self.W2) + self.b2
 
         # logits = tf.Variable(tf.constant(0.0, shape=[100, 10]))  # deleted this line after you implement above layers
 
