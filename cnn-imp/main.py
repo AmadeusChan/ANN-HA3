@@ -112,6 +112,17 @@ with tf.Session() as sess:
         os.mkdir(FLAGS.train_dir)
     if FLAGS.is_train:
         X_train, X_test, y_train, y_test = load_mnist_4d(FLAGS.data_dir)
+
+        temp = np.arange(X_train.shape[0])
+        np.random.shuffle(temp)
+        X_train = X_train[temp]
+        y_train = y_train[temp]
+
+        temp = np.arange(X_train.shape[0])
+        np.random.shuffle(temp)
+        X_train = X_train[temp]
+        y_train = y_train[temp]
+        
         X_val, y_val = X_train[50000:], y_train[50000:]
         X_train, y_train = X_train[:50000], y_train[:50000]
         cnn_model = Model(is_train=True)
