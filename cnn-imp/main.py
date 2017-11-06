@@ -77,6 +77,9 @@ def valid_epoch(model, sess, X, y):
         times += 1
     loss /= times
     acc /= times
+
+    # print sess.run([model.w, model.w_b1, model.w_b2])
+
     return acc, loss
 
 
