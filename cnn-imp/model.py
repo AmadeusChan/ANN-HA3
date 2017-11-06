@@ -6,8 +6,8 @@ import tensorflow as tf
 class Model:
     def __init__(self,
                  is_train,
-                 learning_rate=0.003,
-                 learning_rate_decay_factor=0.9995,
+                 learning_rate=0.001,
+                 learning_rate_decay_factor=0.99,
                  mean_var_decay=0.99):
         with tf.name_scope("input"):
             self.x_ = tf.placeholder(tf.float32, [None, 1, 28, 28], name = "x_input")
