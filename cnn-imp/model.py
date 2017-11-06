@@ -21,6 +21,7 @@ class Model:
         # logits = tf.Variable(tf.constant(0.0, shape=[100, 10]))  # deleted this line after you implement above layers
 
         # 1st convolution layer
+        # the 1st branch
         with tf.name_scope("conv-pool1"):
             with tf.name_scope("conv"):
                 self.W_conv1 = weight_variable(shape = [5, 5, 1, 32])
@@ -67,6 +68,7 @@ class Model:
                 self.b4 = bias_variable(shape = [10])
                 logits = tf.matmul(self.y3, self.W4) + self.b4
 
+        # the 2nd branch
         with tf.name_scope("conv-pool1-branch1"): # output: 12 x 12 x 32
             with tf.name_scope("conv"):
                 self.W_conv1_b1 = weight_variable(shape = [5, 5, 1, 32])
@@ -106,15 +108,59 @@ class Model:
                 self.b2_b1 = bias_variable(shape = [10])
                 logits_b1 = tf.matmul(self.ly1_b1, self.W2_b1) + self.b2_b1
 
+        # the 3rd branch
+        with tf.name_scope("conv-pool1-branch2"): # output: 14 x 14 x 32
+            with tf.name_scope("conv"):
+                self.W_conv1_b2 = weight_variable(shape = [5, 5, 1, 32])
+                self.b_conv1_b2 = bias_variable(shape = [32])
+                self.u1_b2 = tf.nn.conv2d(x, self.W_conv1_b2, strides = [1, 1, 1, 1], padding = "SAME") + self.b_conv1_b2
+            with tf.name_scope("bn"):
+                self.u1_bn_b2 = batch_normalization_layer(self.u1_b2, mean_var_decay, 32, isTrain = is_train)
+            with tf.name_scope("relu"):
+                self.y1_b2 = tf.nn.relu(self.u1_bn_b2)
+            with tf.name_scope("max_pool"):
+                self.p1_b2 = tf.nn.max_pool(self.y1_b2, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = "SAME")
+
+        with tf.name_scope("conv-pool2-branch2"): # output: 7 x 7 x 64
+            with tf.name_scope("conv"):
+                self.W_conv2_b2 = weight_variable(shape = [5, 5, 32, 64])
+                self.b_conv2_b2 = bias_variable(shape = [64])
+                self.u2_b2 = tf.nn.conv2d(self.p1_b2, self.W_conv2_b2, strides = [1, 1, 1, 1], padding = "SAME") + self.b_conv2_b2
+            with tf.name_scope("bn"):
+                self.u2_bn_b2 = batch_normalization_layer(self.u2_b2, mean_var_decay, 64, isTrain = is_train)
+            with tf.name_scope("relu"):
+                self.y2_b2 = tf.nn.relu(self.u2_bn_b2)
+            with tf.name_scope("max_pool"):
+                self.p2_b2 = tf.nn.max_pool(self.y2_b2, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = "SAME")
+
+        with tf.name_scope("classification_layer-branch2"):
+            with tf.name_scope("reshape"):
+                self.p2_rep_b2 = tf.reshape(self.p2_b2, [-1, 7 * 7 * 64])
+            with tf.name_scope("dropout"):
+                self.p2_rep_dp_b2 = tf.nn.dropout(self.p2_rep_b2, keep_prob = self.keep_prob)
+            with tf.name_scope("linear-relu1"):
+                self.W1_b2 = weight_variable(shape = [7 * 7 * 64, 1024])
+                self.b1_b2 = bias_variable(shape = [1024])
+                self.lu1_b2 = tf.matmul(self.p2_rep_dp_b2, self.W1_b2) + self.b1_b2
+                self.ly1_b2 = tf.nn.relu(self.lu1_b2)
+            with tf.name_scope("linear"):
+                self.W2_b2 = weight_variable(shape = [1024, 10])
+                self.b2_b2 = bias_variable(shape = [10])
+                logits_b2 = tf.matmul(self.ly1_b2, self.W2_b2) + self.b2_b2
+
+        '''
 	self.w = tf.Variable(1.)
 	self.w_b1 = tf.Variable(1.)
-        self.logits = logits * self.w + logits_b1 * self.w_b1
+        self.w_b2 = tf.Variable(1.)
+        '''
+        self.logits = logits + logits_b1 + logits_b2
 
         with tf.name_scope("loss"):
             self.loss1 = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=self.y_, logits=logits), name = "loss1")
             self.loss2 = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=self.y_, logits=logits_b1), name = "loss2")
-            self.loss_vote = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=self.y_, logits=self.logits), name = "loss_vote")
-	    self.loss = self.loss1 + self.loss2 + self.loss_vote
+            self.loss3 = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=self.y_, logits=logits_b2), name = "loss3")
+            # self.loss_vote = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=self.y_, logits=self.logits), name = "loss_vote")
+	    self.loss = self.loss1 + self.loss2 + self.loss3
 
         with tf.name_scope("pred-acc"):
             self.correct_pred = tf.equal(tf.cast(tf.argmax(self.logits, 1), tf.int32), self.y_)
