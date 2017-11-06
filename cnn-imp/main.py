@@ -9,7 +9,7 @@ from load_data import load_mnist_4d
 import sys
 from scipy import misc, ndimage
 
-tf.app.flags.DEFINE_integer("batch_size", 100, "batch size for training")
+tf.app.flags.DEFINE_integer("batch_size", 45, "batch size for training")
 tf.app.flags.DEFINE_integer("num_epochs", 100, "number of epochs")
 tf.app.flags.DEFINE_float("keep_prob", 0.5, "drop out rate")
 tf.app.flags.DEFINE_boolean("is_train", True, "False to inference")
@@ -140,11 +140,11 @@ with tf.Session() as sess:
                 y_train = np.append(y_train, temp_label, axis=0)
             for n in range(N, 2*N): 
                 image = X_train[n][0]
-                image = (misc.imrotate(image, 15*np.random.randn()) - 128.) / 255.0
+                image = (misc.imrotate(image, 13*np.random.randn()) - 128.) / 255.0
                 X_train[n][0] = image
             for n in range(2*N, 3*N):
                 # X_train[n][0] = X_train[n][0] + np.random.randn() * 0.05
-                X_train[n][0] = X_train[n][0] + np.random.randn(28, 28) * 0.01
+                X_train[n][0] = X_train[n][0] + np.random.randn(28, 28) * 0.02
             for n in range(3*N, 4*N): 
                 image = X_train[n][0]
                 image = (ndimage.shift(misc.imrotate(image, np.random.randn()), (np.random.randn() * 2, np.random.randn() * 2) ) - 128.) / 255.0
@@ -193,8 +193,11 @@ with tf.Session() as sess:
             print("  test accuracy:                 " + str(test_acc))
             print "\n"
 
+            '''
             if train_loss > max(pre_losses):
                 sess.run(cnn_model.learning_rate_decay_op)
+            '''
+            sess.run(cnn_model.learning_rate_decay_op)
             pre_losses = pre_losses[1:] + [train_loss]
 
     else:
