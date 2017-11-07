@@ -6,13 +6,14 @@ import tensorflow as tf
 class Model:
     def __init__(self,
                  is_train,
-                 learning_rate=0.003,
-                 learning_rate_decay_factor=0.9995,
+                 learning_rate=0.0015,
+                 learning_rate_decay_factor=0.99,
                  mean_var_decay=0.99):
         with tf.name_scope("input"):
             self.x_ = tf.placeholder(tf.float32, [None, 1, 28, 28], name = "x_input")
             self.y_ = tf.placeholder(tf.int32, [None], name = "y_input")
             x = tf.reshape(self.x_, [-1, 28, 28, 1])
+            # x = tf.nn.dropout(x, keep_prob = 0.9)
 
         self.keep_prob = tf.placeholder(tf.float32)
 
@@ -55,7 +56,7 @@ class Model:
                 self.pool2_reshape = tf.reshape(self.pool2, [-1, 7 * 7 * 256])
 
             with tf.name_scope("dropout"):
-                self.pool2_reshape_drop = tf.nn.dropout(self.pool2_reshape, keep_prob = self.keep_prob, name = "drop1")
+                self.pool2_reshape_drop = tf.nn.dropout(self.pool2_reshape, keep_prob = 0.6, name = "drop1")
             # classification layer
 
             with tf.name_scope("linear"):
@@ -97,7 +98,7 @@ class Model:
             with tf.name_scope("reshape"):
                 self.p2_rep_b1 = tf.reshape(self.p2_b1, [-1, 4096])
             with tf.name_scope("dropout"):
-                self.p2_rep_dp_b1 = tf.nn.dropout(self.p2_rep_b1, keep_prob = self.keep_prob)
+                self.p2_rep_dp_b1 = tf.nn.dropout(self.p2_rep_b1, keep_prob = 0.8)
             with tf.name_scope("linear-relu1"):
                 self.W1_b1 = weight_variable(shape = [4096, 256])
                 self.b1_b1 = bias_variable(shape = [256])
@@ -137,7 +138,7 @@ class Model:
             with tf.name_scope("reshape"):
                 self.p2_rep_b2 = tf.reshape(self.p2_b2, [-1, 7 * 7 * 64])
             with tf.name_scope("dropout"):
-                self.p2_rep_dp_b2 = tf.nn.dropout(self.p2_rep_b2, keep_prob = self.keep_prob)
+                self.p2_rep_dp_b2 = tf.nn.dropout(self.p2_rep_b2, keep_prob = 0.6)
             with tf.name_scope("linear-relu1"):
                 self.W1_b2 = weight_variable(shape = [7 * 7 * 64, 1024])
                 self.b1_b2 = bias_variable(shape = [1024])
