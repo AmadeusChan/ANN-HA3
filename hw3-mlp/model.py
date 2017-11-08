@@ -25,36 +25,6 @@ class Model:
         self.u1 = tf.matmul(self.x_, self.W1) + self.b1
         self.u1_bn = batch_normalization_layer(self.u1, 2048, isTrain = is_train)
 
-        # create tensorflow variable to save mean and variace for inference
-        '''
-        self.iteration = tf.Variable(0., trainable = False, dtype = tf.float32)
-        self.ave_mean = tf.Variable(tf.zeros(shape = [1, 2048]), trainable = False)
-        self.ave_var = tf.Variable(tf.zeros(shape = [1, 2048]), trainable = False)
-
-        self.mean, self.var = tf.nn.moments(self.u1, axes = 0, keep_dims = True)
-        self.update_iter_op = self.iteration.assign(self.iteration + 1)
-
-        self.batch_size = tf.to_float(tf.shape(self.x_)[0])
-        '''
-	'''
-        self.update_mean_op = self.ave_mean.assign(self.ave_mean * (self.iteration / (self.iteration + 1.)) + self.mean / (self.iteration + 1.))
-        self.update_var_op = self.ave_var.assign(self.ave_var * (self.iteration / (self.iteration + 1.)) + self.var * self.batch_size / (self.batch_size - 1.) / (self.iteration + 1.))
-	'''
-
-        '''
-	self.update_mean_op = self.ave_mean.assign(self.ave_mean * mean_var_decay + self.mean * (1. - mean_var_decay))
-	self.update_var_op = self.ave_var.assign(self.ave_var * mean_var_decay + self.var * self.batch_size / (self.batch_size - 1.) * (1. - mean_var_decay))
-
-        self.scale = tf.Variable(tf.constant(1., shape = self.mean.shape))
-        self.offset = tf.Variable(tf.constant(0., shape = self.mean.shape))
-
-        # perform batch-normalization
-        if is_train:
-            self.u1_bn = batch_normalization_layer(self.u1, scale = self.scale, offset = self.offset)
-        else:
-            self.u1_bn = batch_normalization_layer(self.u1, scale = self.scale, offset = self.offset, ave_var = self.ave_var, ave_mean = self.ave_mean, isTrain = False)
-        '''
-
         self.y1 = tf.nn.relu(self.u1_bn)
         self.y1_drop = tf.nn.dropout(self.y1, keep_prob = self.keep_prob)
 
@@ -107,17 +77,4 @@ def batch_normalization_layer(inputs, depth, decay = 0.99, isTrain=True):
         return tf.nn.batch_normalization(inputs, mean = m, variance = v, offset = offset, scale = scale, variance_epsilon = tf.constant(1e-10))
     else:
         return tf.nn.batch_normalization(inputs, mean = ave_m, variance = ave_v, offset = offset, scale = scale, variance_epsilon = tf.constant(1e-10))
-
-    # if isTrain:
-        '''
-        to implement batch normalization in training process
-        '''
-        # mean, var = tf.nn.moments(inputs, axes = 0, keep_dims = True)
-        # return tf.nn.batch_normalization(inputs, mean = mean, variance = var, offset = offset, scale = scale, variance_epsilon = tf.constant(1e-10))
-
-    # else :
-        '''
-        to implement batch normalization in inference process
-        '''
-        # return tf.nn.batch_normalization(inputs, mean = ave_mean, variance = ave_var, offset = offset, scale = scale, variance_epsilon = tf.constant(1e-10))
 

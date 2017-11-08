@@ -10,10 +10,10 @@ import sys
 from scipy import misc
 from scipy import ndimage
 
-tf.app.flags.DEFINE_integer("batch_size", 100, "batch size for training")
+tf.app.flags.DEFINE_integer("batch_size", 150, "batch size for training")
 tf.app.flags.DEFINE_integer("num_epochs", 100, "number of epochs")
 tf.app.flags.DEFINE_float("keep_prob", 0.5, "drop out rate")
-tf.app.flags.DEFINE_boolean("is_train", False, "False to inference")
+tf.app.flags.DEFINE_boolean("is_train", True, "False to inference")
 tf.app.flags.DEFINE_string("data_dir", "./MNIST_data", "data dir")
 tf.app.flags.DEFINE_string("train_dir", "./train", "training dir")
 tf.app.flags.DEFINE_integer("inference_version", 0, "the param version for inference")
@@ -101,7 +101,9 @@ os.system("touch " + valid_file)
 os.system("rm " + test_file)
 os.system("touch " + test_file)
 
-with tf.Session() as sess:
+gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.4) 
+
+with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
     if not os.path.exists(FLAGS.train_dir):
         os.mkdir(FLAGS.train_dir)
     if FLAGS.is_train:
@@ -115,28 +117,6 @@ with tf.Session() as sess:
 
         X_val, y_val = X_train[50000:], y_train[50000:]
         X_train, y_train = X_train[:50000], y_train[:50000]
-
-        # data augmentation
-        if (len(sys.argv)>4) and (sys.argv[4]=="-da"):
-            temp_data = X_train.copy()
-            temp_label = y_train.copy()
-            N = X_train.shape[0]
-            
-            for i in range(3):
-                X_train = np.append(X_train, temp_data, axis=0)
-                y_train = np.append(y_train, temp_label, axis=0)
-            for n in range(N, 2*N): 
-                image = X_train[n][0]
-                image = (misc.imrotate(image, 15*np.random.randn()) - 128.) / 255.0
-                X_train[n][0] = image
-            for n in range(2*N, 3*N):
-                # X_train[n][0] = X_train[n][0] + np.random.randn() * 0.05
-                X_train[n][0] = X_train[n][0] + np.random.randn(28, 28) * 0.01
-            for n in range(3*N, 4*N): 
-                image = X_train[n][0]
-                image = (ndimage.shift(misc.imrotate(image, np.random.randn()), (np.random.randn() * 2, np.random.randn() * 2) ) - 128.) / 255.0
-                X_train[n][0] = image
-            print X_train.shape, ' ', y_train.shape
 
         cnn_model = Model(is_train=True)
 

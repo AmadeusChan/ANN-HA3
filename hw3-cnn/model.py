@@ -6,7 +6,7 @@ import tensorflow as tf
 class Model:
     def __init__(self,
                  is_train,
-                 learning_rate=0.003,
+                 learning_rate=0.001,
                  learning_rate_decay_factor=0.999,
                  mean_var_decay=0.99):
         with tf.name_scope("input"):
@@ -37,11 +37,11 @@ class Model:
         # 2nd convolution layer
         with tf.name_scope("conv-pool2"):
             with tf.name_scope("conv"):
-                self.W_conv2 = weight_variable(shape = [5, 5, 32, 256])
-                self.b_conv2 = bias_variable(shape = [256])
+                self.W_conv2 = weight_variable(shape = [5, 5, 32, 64])
+                self.b_conv2 = bias_variable(shape = [64])
                 self.u2 = tf.nn.conv2d(self.pool1, self.W_conv2, strides = [1, 1, 1, 1], padding = "SAME") + self.b_conv2
             with tf.name_scope("bn"):
-                self.u2_bn = batch_normalization_layer(self.u2, mean_var_decay, 256, isTrain = is_train)
+                self.u2_bn = batch_normalization_layer(self.u2, mean_var_decay, 64, isTrain = is_train)
             with tf.name_scope("relu"):
                 self.y2 = tf.nn.relu(self.u2_bn, name = "relu2")
             # 2nd max-pool layer
@@ -51,19 +51,19 @@ class Model:
 
         with tf.name_scope("classification_layer"):
             with tf.name_scope("reshape"):
-                self.pool2_reshape = tf.reshape(self.pool2, [-1, 7 * 7 * 256])
+                self.pool2_reshape = tf.reshape(self.pool2, [-1, 7 * 7 * 64])
 
             with tf.name_scope("dropout"):
                 self.pool2_reshape_drop = tf.nn.dropout(self.pool2_reshape, keep_prob = self.keep_prob, name = "drop1")
             # classification layer
 
             with tf.name_scope("linear"):
-                self.W3 = weight_variable(shape = [7 * 7 * 256, 128])
-                self.b3 = bias_variable(shape = [128])
+                self.W3 = weight_variable(shape = [7 * 7 * 64, 512])
+                self.b3 = bias_variable(shape = [512])
                 self.u3 = tf.matmul(self.pool2_reshape_drop, self.W3) + self.b3
                 self.y3 = tf.nn.relu(self.u3)
                 
-                self.W4 = weight_variable(shape = [128, 10])
+                self.W4 = weight_variable(shape = [512, 10])
                 self.b4 = bias_variable(shape = [10])
                 logits = tf.matmul(self.y3, self.W4) + self.b4
 
