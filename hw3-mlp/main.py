@@ -10,8 +10,8 @@ from load_data import load_mnist_2d
 from scipy import misc
 from scipy import ndimage
 
-tf.app.flags.DEFINE_integer("batch_size", 150, "batch size for training")
-tf.app.flags.DEFINE_integer("num_epochs", 200, "number of epochs")
+tf.app.flags.DEFINE_integer("batch_size", 50, "batch size for training")
+tf.app.flags.DEFINE_integer("num_epochs", 100, "number of epochs")
 tf.app.flags.DEFINE_float("keep_prob", 1., "drop out rate")
 tf.app.flags.DEFINE_boolean("is_train", True, "False to inference")
 tf.app.flags.DEFINE_string("data_dir", "./MNIST_data", "data dir")
