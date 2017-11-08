@@ -6,10 +6,10 @@ import tensorflow as tf
 class Model:
     def __init__(self,
                  is_train,
-                 learning_rate=0.01,
-                 learning_rate_decay_factor=0.93,
+                 learning_rate=1e-3,
+                 learning_rate_decay_factor=1.,
                  mean_var_decay=0.99,
-		 weight_decay=1e-4):
+		 weight_decay=0.):
         with tf.name_scope("input"):
             self.x_ = tf.placeholder(tf.float32, [None, 1, 28, 28], name = "x_input")
             self.y_ = tf.placeholder(tf.int32, [None], name = "y_input")
