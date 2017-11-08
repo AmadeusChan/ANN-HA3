@@ -43,6 +43,8 @@ def train_epoch(model, sess, X, y):
     global iteration
     loss, acc = 0.0, 0.0
     st, ed, times = 0, FLAGS.batch_size, 0
+    sl, sa = 0.0, 0.0
+    c = 0.0
     while st < len(X) and ed <= len(X):
         X_batch, y_batch = X[st:ed], y[st:ed]
         feed = {model.x_: X_batch, model.y_: y_batch, model.keep_prob: FLAGS.keep_prob}
@@ -57,6 +59,12 @@ def train_epoch(model, sess, X, y):
         '''
 
         iteration += 1
+	c = c + 1
+	sl = sl + loss_
+	sa = sa + acc_
+	if iteration % 500 == 0:
+            print("iter: " + str(iteration) + " loss:" + str(sl / c) + " acc:" + str(sa / c))
+	    c, sl, sa = 0.0, 0.0, 0.0
         with open(train_file, "a") as f:
             f.write(str(iteration) + " " + str(loss_) + " " + str(acc_) + "\n")
     loss /= times
@@ -113,6 +121,36 @@ with tf.Session() as sess:
     if FLAGS.is_train:
         X_train, X_test, y_train, y_test = load_mnist_4d(FLAGS.data_dir)
 
+        cnn_model = Model(is_train=True)
+	TSIZE = 50000
+
+        merged = tf.summary.merge_all()
+        writer = tf.summary.FileWriter("/tmp/mnist_logs", sess.graph)
+        # data augmentation
+        if (len(sys.argv)>4) and (sys.argv[4]=="-da"):
+            temp_data = X_train.copy()
+            temp_label = y_train.copy()
+            N = X_train.shape[0]
+	    TSIZE = 150000
+            
+            for i in range(2):
+                X_train = np.append(X_train, temp_data, axis=0)
+                y_train = np.append(y_train, temp_label, axis=0)
+
+            for n in range(N, 3*N): 
+                # image = X_train[n][0]
+                # image = (misc.imrotate(image, 10 * np.random.randn()) - 128.) / 255.0
+                # X_train[n][0] = image
+            # for n in range(2*N, 3*N):
+                # X_train[n][0] = X_train[n][0] + np.random.randn() * 0.05
+                X_train[n][0] = X_train[n][0] + np.random.randn(28, 28) * 0.02
+            # for n in range(3*N, 4*N): 
+                image = X_train[n][0]
+                image = (ndimage.shift(misc.imrotate(image, 10 * np.random.randn()), (np.random.randn() * 2, np.random.randn() * 2) ) - 128.) / 255.0
+                X_train[n][0] = image
+
+            print X_train.shape, ' ', y_train.shape
+
         temp = np.arange(X_train.shape[0])
         np.random.shuffle(temp)
         X_train = X_train[temp]
@@ -123,34 +161,9 @@ with tf.Session() as sess:
         X_train = X_train[temp]
         y_train = y_train[temp]
         
-        X_val, y_val = X_train[50000:], y_train[50000:]
-        X_train, y_train = X_train[:50000], y_train[:50000]
-        cnn_model = Model(is_train=True)
-
-        merged = tf.summary.merge_all()
-        writer = tf.summary.FileWriter("/tmp/mnist_logs", sess.graph)
-        # data augmentation
-        if (len(sys.argv)>4) and (sys.argv[4]=="-da"):
-            temp_data = X_train.copy()
-            temp_label = y_train.copy()
-            N = X_train.shape[0]
-            
-            for i in range(3):
-                X_train = np.append(X_train, temp_data, axis=0)
-                y_train = np.append(y_train, temp_label, axis=0)
-            for n in range(N, 2*N): 
-                image = X_train[n][0]
-                image = (misc.imrotate(image, 13*np.random.randn()) - 128.) / 255.0
-                X_train[n][0] = image
-            for n in range(2*N, 3*N):
-                # X_train[n][0] = X_train[n][0] + np.random.randn() * 0.05
-                X_train[n][0] = X_train[n][0] + np.random.randn(28, 28) * 0.02
-            for n in range(3*N, 4*N): 
-                image = X_train[n][0]
-                image = (ndimage.shift(misc.imrotate(image, np.random.randn()), (np.random.randn() * 2, np.random.randn() * 2) ) - 128.) / 255.0
-                X_train[n][0] = image
-            print X_train.shape, ' ', y_train.shape
-
+        X_val, y_val = X_train[TSIZE:], y_train[TSIZE:]
+        X_train, y_train = X_train[:TSIZE], y_train[:TSIZE]
+ 
 
         '''
         if tf.train.get_checkpoint_state(FLAGS.train_dir):
@@ -182,7 +195,7 @@ with tf.Session() as sess:
                     f.write(str(test_loss) + " " + str(test_acc) + "\n")
 
             epoch_time = time.time() - start_time
-            print("Epoch " + str(epoch + 1) + " of " + str(FLAGS.num_epochs) + " took " + str(epoch_time) + "s")
+            print("\nEpoch " + str(epoch + 1) + " of " + str(FLAGS.num_epochs) + " took " + str(epoch_time) + "s")
             print("  learning rate:                 " + str(cnn_model.learning_rate.eval()))
             print("  training loss:                 " + str(train_loss))
             print("  validation loss:               " + str(val_loss))

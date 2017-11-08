@@ -6,9 +6,10 @@ import tensorflow as tf
 class Model:
     def __init__(self,
                  is_train,
-                 learning_rate=0.0015,
-                 learning_rate_decay_factor=0.99,
-                 mean_var_decay=0.99):
+                 learning_rate=0.01,
+                 learning_rate_decay_factor=0.93,
+                 mean_var_decay=0.99,
+		 weight_decay=1e-5):
         with tf.name_scope("input"):
             self.x_ = tf.placeholder(tf.float32, [None, 1, 28, 28], name = "x_input")
             self.y_ = tf.placeholder(tf.int32, [None], name = "y_input")
@@ -161,7 +162,11 @@ class Model:
             self.loss2 = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=self.y_, logits=logits_b1), name = "loss2")
             self.loss3 = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=self.y_, logits=logits_b2), name = "loss3")
             # self.loss_vote = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=self.y_, logits=self.logits), name = "loss_vote")
-	    self.loss = self.loss1 + self.loss2 + self.loss3
+	    vars   = tf.trainable_variables() 
+	    self.lossL2 = tf.add_n([ tf.nn.l2_loss(v) for v in vars ]) * weight_decay
+
+	    self.loss = self.loss1 + self.loss2 + self.loss3 + self.lossL2
+
 
         with tf.name_scope("pred-acc"):
             self.correct_pred = tf.equal(tf.cast(tf.argmax(self.logits, 1), tf.int32), self.y_)
@@ -183,12 +188,12 @@ class Model:
 
 
 def weight_variable(shape):  # you can use this func to build new variables
-    initial = tf.truncated_normal(shape, stddev=0.1)
+    initial = tf.truncated_normal(shape, stddev=.1)
     return tf.Variable(initial)
 
 
 def bias_variable(shape):  # you can use this func to build new variables
-    initial = tf.constant(0.1, shape=shape)
+    initial = tf.constant(.1, shape=shape)
     return tf.Variable(initial)
 
 
