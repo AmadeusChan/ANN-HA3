@@ -5,7 +5,7 @@ import tensorflow as tf
 class Model:
     def __init__(self,
                  is_train,
-                 learning_rate=0.001,
+                 learning_rate=0.003,
                  learning_rate_decay_factor=0.9995,
 		 mean_var_decay = 0.999
                  ):
@@ -19,16 +19,16 @@ class Model:
         # TODO:  implement input -- Linear -- BN -- ReLU -- Linear -- loss
         #        the 10-class prediction output is named as "logits"
 
-        self.W1 = weight_variable(shape = [784, 392], name = "linear_W1")
-        self.b1 = bias_variable(shape = [392], name = "linear_b1")
+        self.W1 = weight_variable(shape = [784, 1024], name = "linear_W1")
+        self.b1 = bias_variable(shape = [1024], name = "linear_b1")
 
         self.u1 = tf.matmul(self.x_, self.W1) + self.b1
-        self.u1_bn = batch_normalization_layer(self.u1, 392, isTrain = is_train)
+        self.u1_bn = batch_normalization_layer(self.u1, 1024, isTrain = is_train)
 
         self.y1 = tf.nn.relu(self.u1_bn)
         self.y1_drop = tf.nn.dropout(self.y1, keep_prob = self.keep_prob)
 
-        self.W2 = weight_variable(shape = [392, 10], name = "linear_W2")
+        self.W2 = weight_variable(shape = [1024, 10], name = "linear_W2")
         self.b2 = bias_variable(shape = [10], name = "linear_b2")
 
         self.logits = tf.matmul(self.y1_drop, self.W2) + self.b2
@@ -62,6 +62,7 @@ def bias_variable(shape, name):  # you can use this func to build new variables
 
 def batch_normalization_layer(inputs, depth, decay = 0.99, isTrain=True):
     # TODO: implemented the batch normalization func and applied it on fully-connected layers
+    return inputs
 
     bat_sz = tf.to_float(tf.shape(inputs)[0])
     m, v = tf.nn.moments(inputs, axes = 0, keep_dims = True)
