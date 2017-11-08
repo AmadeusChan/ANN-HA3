@@ -62,6 +62,7 @@ def bias_variable(shape, name):  # you can use this func to build new variables
 
 def batch_normalization_layer(inputs, depth, decay = 0.99, isTrain=True):
     # TODO: implemented the batch normalization func and applied it on fully-connected layers
+    return inputs
 
     bat_sz = tf.to_float(tf.shape(inputs)[0])
     m, v = tf.nn.moments(inputs, axes = 0, keep_dims = True)
