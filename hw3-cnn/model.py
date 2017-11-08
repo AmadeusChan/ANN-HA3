@@ -6,7 +6,7 @@ import tensorflow as tf
 class Model:
     def __init__(self,
                  is_train,
-                 learning_rate=0.001,
+                 learning_rate=0.005,
                  learning_rate_decay_factor=0.999,
                  mean_var_decay=0.99):
         with tf.name_scope("input"):
