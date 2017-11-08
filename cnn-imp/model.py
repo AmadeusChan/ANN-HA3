@@ -9,7 +9,7 @@ class Model:
                  learning_rate= 1e-3,
                  learning_rate_decay_factor=.99,
                  mean_var_decay=0.99,
-		 weight_decay=1e-7):
+		 weight_decay=1e-6):
         with tf.name_scope("input"):
             self.x_ = tf.placeholder(tf.float32, [None, 1, 28, 28], name = "x_input")
             self.y_ = tf.placeholder(tf.int32, [None], name = "y_input")

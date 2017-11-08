@@ -19,16 +19,16 @@ class Model:
         # TODO:  implement input -- Linear -- BN -- ReLU -- Linear -- loss
         #        the 10-class prediction output is named as "logits"
 
-        self.W1 = weight_variable(shape = [784, 2048], name = "linear_W1")
-        self.b1 = bias_variable(shape = [2048], name = "linear_b1")
+        self.W1 = weight_variable(shape = [784, 392], name = "linear_W1")
+        self.b1 = bias_variable(shape = [392], name = "linear_b1")
 
         self.u1 = tf.matmul(self.x_, self.W1) + self.b1
-        self.u1_bn = batch_normalization_layer(self.u1, 2048, isTrain = is_train)
+        self.u1_bn = batch_normalization_layer(self.u1, 392, isTrain = is_train)
 
         self.y1 = tf.nn.relu(self.u1_bn)
         self.y1_drop = tf.nn.dropout(self.y1, keep_prob = self.keep_prob)
 
-        self.W2 = weight_variable(shape = [2048, 10], name = "linear_W2")
+        self.W2 = weight_variable(shape = [392, 10], name = "linear_W2")
         self.b2 = bias_variable(shape = [10], name = "linear_b2")
 
         self.logits = tf.matmul(self.y1_drop, self.W2) + self.b2
